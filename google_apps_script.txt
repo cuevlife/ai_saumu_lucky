@@ -1,0 +1,134 @@
+/**
+ * AI Saumu Lucky - Google Apps Script (อับดุล 6.0 - Zero-Token Architecture)
+ * -----------------------------------------------------------------------
+ * เน้นการอ่านข้อมูลจาก Sheets เป็นหลัก เพื่อประหยัด API Token
+ */
+
+const SHEET_ID = '1IKH7fnrCP91lKTmrW2d21c6CG_K3xpwS3FCsDkegc08';
+
+// --- ฟังก์ชันรับข้อมูลจากแอป (POST) ---
+function doPost(e) {
+  try {
+    const requestData = JSON.parse(e.postData.contents);
+    const prompt = requestData.prompt;
+    const config = getConfiguration();
+    
+    // 1. ตรวจสอบว่าเป็นคำขอ 'ดูดวงรายวัน' หรือไม่
+    if (prompt.includes("ช่วยทำนายดวงรายวันของคนราศี")) {
+      const match = prompt.match(/ราศี:\s*'([^']+)'/);
+      const zodiac = match ? match[1] : "unknown";
+      const todayStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+      
+      // ดึงจาก Sheets ทันที (Zero Token!)
+      const cached = getCachedHoroscope(zodiac, todayStr);
+      if (cached) {
+        return ContentService.createTextOutput(cached).setMimeType(ContentService.MimeType.TEXT);
+      } else {
+        // ถ้าไม่มีข้อมูลในชีต (กรณีพิเศษ) ให้เรียก AI 1 ครั้งแล้วเซฟไว้
+        const aiResult = callGeminiAPI(prompt, config);
+        if (aiResult.success) {
+          saveHoroscopeToCache(zodiac, todayStr, aiResult.data);
+          return ContentService.createTextOutput(aiResult.data).setMimeType(ContentService.MimeType.TEXT);
+        }
+      }
+    }
+
+    // 2. ถ้าเป็น 'ทำนายฝันเจาะลึก' (จ่าย 5 เหรียญ) -> เรียก AI สดๆ
+    const aiResult = callGeminiAPI(prompt, config);
+    if (aiResult.success) {
+      return ContentService.createTextOutput(aiResult.data).setMimeType(ContentService.MimeType.TEXT);
+    } else {
+      return createJsonResponse({error: aiResult.error, details: aiResult.details});
+    }
+
+  } catch (err) {
+    return createJsonResponse({error: err.message});
+  }
+}
+
+// --- ฟังก์ชัน AI Generator (เรียกใช้ผ่าน Triggers ตอนตี 1) ---
+function autoUpdateDailyHoroscope() {
+  const config = getConfiguration();
+  const zodiacs = ['ราศีเมษ', 'ราศีพฤษภ', 'ราศีเมถุน', 'ราศีกรกฎ', 'ราศีสิงห์', 'ราศีกันย์', 'ราศีตุลย์', 'ราศีพิจิก', 'ราศีธนู', 'ราศีมังกร', 'ราศีกุมภ์', 'ราศีมีน'];
+  const todayStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+
+  console.log("--- เริ่มทำนายดวงล่วงหน้าประจำวัน ---");
+  for (const zodiac of zodiacs) {
+    if (getCachedHoroscope(zodiac, todayStr)) continue;
+
+    const prompt = `คุณคือ 'อับดุล' ปรมาจารย์โหราศาสตร์ไทย ทำนายดวงรายวันประจำวันที่ ${todayStr} ของราศี ${zodiac} ตอบเป็น JSON ภาษาไทยเท่านั้น: {work, money, love, lucky_color, lucky_time}`;
+    const aiResult = callGeminiAPI(prompt, config);
+    
+    if (aiResult.success) {
+      saveHoroscopeToCache(zodiac, todayStr, aiResult.data);
+      console.log(`✅ ${zodiac} สำเร็จ`);
+      Utilities.sleep(3000); 
+    }
+  }
+  console.log("--- อัปเดตฐานข้อมูลดวงเสร็จสิ้น ---");
+}
+
+// --- Helper Functions (ประมวลผล Model & Key สำรอง) ---
+function callGeminiAPI(prompt, config) {
+  let lastError = "";
+  for (const model of config.models) {
+    for (const key of config.apiKeys) {
+      for (let r = 0; r < 2; r++) { // ลอง 2 ครั้งต่อ Key
+        try {
+          const response = UrlFetchApp.fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+            method: "post",
+            contentType: "application/json",
+            payload: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { response_mime_type: "application/json" }
+            }),
+            muteHttpExceptions: true
+          });
+          if (response.getResponseCode() == 200) {
+            return { success: true, data: JSON.parse(response.getContentText()).candidates[0].content.parts[0].text };
+          }
+          if (response.getResponseCode() == 503) { Utilities.sleep(2000); continue; }
+          lastError = `Code ${response.getResponseCode()}`;
+          break;
+        } catch (e) { lastError = e.message; }
+      }
+    }
+  }
+  return { success: false, error: "AI Busy", details: lastError };
+}
+
+function getConfiguration() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  let sheet = ss.getSheetByName('Config') || ss.insertSheet('Config');
+  const data = sheet.getDataRange().getValues();
+  const apiKeys = [], models = [];
+  for (let i = 1; i < data.length; i++) {
+    const k = data[i][0].toString(), v = data[i][1].toString();
+    if (k.startsWith('API_KEY') && v && !v.includes('ใส่')) apiKeys.push(v);
+    else if (k.startsWith('MODEL_NAME') && v) models.push(v);
+  }
+  if (models.length === 0) models.push("gemini-3.1-flash-lite-preview");
+  return { apiKeys, models };
+}
+
+function getCachedHoroscope(zodiac, dateStr) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  let sheet = ss.getSheetByName('HoroscopeDB') || ss.insertSheet('HoroscopeDB');
+  const data = sheet.getDataRange().getValues();
+  for (let i = data.length - 1; i > 0; i--) {
+    let d = data[i][0];
+    if (d instanceof Date) d = Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy-MM-dd");
+    if (String(d) === dateStr && data[i][1] === zodiac) return data[i][2];
+  }
+  return null;
+}
+
+function saveHoroscopeToCache(zodiac, dateStr, resultData) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sheet = ss.getSheetByName('HoroscopeDB');
+  sheet.appendRow([dateStr, zodiac, resultData]);
+}
+
+function createJsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}

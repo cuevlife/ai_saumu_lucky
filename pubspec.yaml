@@ -1,0 +1,29 @@
+name: ai_saumu_lucky
+description: "A new Flutter project for AI Saumu Lucky."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  google_generative_ai: ^0.4.7 # ตัวเชื่อมต่อ AI Gemini
+  google_mobile_ads: ^7.0.0    # ตัวจัดการโฆษณา AdMob
+  http: ^1.6.0
+  desktop_window: ^0.4.2
+  shared_preferences: ^2.5.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/tarot/
+    - assets/stars_bg.jpg
