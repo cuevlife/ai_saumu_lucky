@@ -51,6 +51,13 @@ class _HoroscopeScreenState extends State<HoroscopeScreen> {
   }
 
   Future<void> _fetchHoroscope(String zodiac) async {
+    if (widget.currentCoins < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('เหรียญไม่พอสำหรับเปิดดวงชะตา (ต้องการ 1 🪙)')),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _selectedZodiac = zodiac;
@@ -72,14 +79,17 @@ class _HoroscopeScreenState extends State<HoroscopeScreen> {
       """;
 
       final response = await _geminiService.callAbdul(horoscopePrompt); 
+      
+      if (!mounted) return;
       final decodedResponse = json.decode(response);
-
-      if (!mounted) return; // ป้องกัน Error ถ้าผู้ใช้ปิดหน้าไปก่อน
 
       setState(() {
         _result = decodedResponse;
         _isLoading = false;
       });
+
+      // หักเหรียญเมื่อสำเร็จ
+      widget.onCoinDeducted(widget.currentCoins - 1);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -109,7 +119,27 @@ class _HoroscopeScreenState extends State<HoroscopeScreen> {
         ),
         child: Column(
           children: [
-            if (_result == null && !_isLoading) ...[
+            // ส่วนแสดงผลเมื่อกำลังโหลด (เพิ่มความลื่นไหลและข้อความที่ดูขลัง)
+            if (_isLoading) 
+              const Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: CircularProgressIndicator(color: Color(0xFFD4AF37), strokeWidth: 2),
+                      ),
+                      const SizedBox(height: 25),
+                      Text('กำลังอ่านรหัสจากดวงดาว...', style: TextStyle(color: Color(0xFFD4AF37), letterSpacing: 3, fontSize: 13)),
+                      const SizedBox(height: 8),
+                      Text('โปรดตั้งจิตให้เป็นสมาธิ', style: TextStyle(color: Colors.white10, fontSize: 11)),
+                    ],
+                  ),
+                ),
+              )
+            else if (_result == null) ...[
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
                 child: Text(
@@ -131,19 +161,6 @@ class _HoroscopeScreenState extends State<HoroscopeScreen> {
                     final zodiac = _zodiacs[index];
                     return _buildZodiacPlate(zodiac);
                   },
-                ),
-              ),
-            ] else if (_isLoading) ...[
-              const Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(color: Color(0xFFD4AF37)),
-                      SizedBox(height: 20),
-                      Text('กำลังอ่านรหัสจากดวงดาว...', style: TextStyle(color: Color(0xFFD4AF37), letterSpacing: 1.5)),
-                    ],
-                  ),
                 ),
               ),
             ] else ...[
