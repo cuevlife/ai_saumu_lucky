@@ -8,8 +8,13 @@ import 'security_service.dart';
 class GeminiService {
   final String _spreadsheetId = "1IKH7fnrCP91lKTmrW2d21c6CG_K3xpwS3FCsDkegc08";
   
-  // 🔐 ข้อมูล Service Account (Encrypted JSON - ปลอดภัยแน่นอน)
-  static const String _encryptedServiceAccount = "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\n-----END PRIVATE KEY-----\n\",  \"client_email\": \"kranservice@sheetapikran.iam.gserviceaccount.com\",  \"client_id\": \"114691998876646156937\",  \"auth_uri\": \"https://accounts.google.com/o/oauth2/auth\",  \"token_uri\": \"https://oauth2.googleapis.com/token\",  \"auth_provider_x509_cert_url\": \"https://www.googleapis.com/oauth2/v1/certs\",  \"client_x509_cert_url\": \"https://www.googleapis.com/robot/v1/metadata/x509/kranservice%40sheetapikran.iam.gserviceaccount.com\",  \"universe_domain\": \"googleapis.com\"}";
+  final String _clientEmail = "kranservice@sheetapikran.iam.gserviceaccount.com";
+  final String _projectId = "sheetapikran";
+  final String _clientId = "114691998876646156937";
+  final String _privateKeyId = "ae76025c3912ff069f64acd42c4e93b476e24097";
+  
+  // 🔐 รหัสลับ Private Key (ชุดสมบูรณ์ 100% ผ่านการตรวจสอบ Block Size แล้ว)
+  final String _encryptedPrivateKey = "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";
 
   GSheets? _gsheets;
   Spreadsheet? _ss;
@@ -28,13 +33,28 @@ class GeminiService {
 
   Future<void> _doInit() async {
     try {
-      final String credentialsJson = SecurityService.decryptKey(_encryptedServiceAccount);
-      if (credentialsJson == "ERROR_DECRYPTING") {
-        print("DEBUG_ERROR: Failed to decrypt credentials");
+      final String privateKey = SecurityService.decryptKey(_encryptedPrivateKey.trim());
+      if (privateKey == "ERROR_DECRYPTING") {
+        print("DEBUG_ERROR: Private Key Decryption Failed");
         _initFuture = null;
         return;
       }
-      _gsheets = GSheets(credentialsJson);
+
+      final credentials = {
+        "type": "service_account",
+        "project_id": _projectId,
+        "private_key_id": _privateKeyId,
+        "private_key": privateKey,
+        "client_email": _clientEmail,
+        "client_id": _clientId,
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/${Uri.encodeComponent(_clientEmail)}",
+        "universe_domain": "googleapis.com"
+      };
+
+      _gsheets = GSheets(json.encode(credentials));
       _ss = await _gsheets!.spreadsheet(_spreadsheetId);
       print("DEBUG_SUCCESS: Connected to Private Sheet!");
     } catch (e) {
@@ -47,7 +67,8 @@ class GeminiService {
     if (_apiKeys.isNotEmpty) return;
     try {
       await _initGSheets();
-      final sheet = _ss?.worksheetByTitle('Config');
+      if (_ss == null) return;
+      final sheet = _ss!.worksheetByTitle('Config');
       if (sheet == null) return;
 
       final values = await sheet.values.allRows();
@@ -105,7 +126,7 @@ class GeminiService {
       final rows = await sheet.values.allRows();
       bool alreadyExists = rows.any((r) => r.length >= 2 && r[0].toString().replaceAll(RegExp(r'[^0-9-]'), '').contains(today) && r[1].toString().trim() == zodiac.trim());
       if (!alreadyExists) {
-        await sheet.values.appendRow(["'$today", zodiac, resultData]);
+        await sheet.values.appendRow([today, zodiac, resultData]);
         print("WRITE_SUCCESS: Saved horoscope for $zodiac");
       }
     } catch (e) {
