@@ -11,11 +11,14 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.6
-  google_generative_ai: ^0.4.7 # ตัวเชื่อมต่อ AI Gemini
-  google_mobile_ads: ^7.0.0    # ตัวจัดการโฆษณา AdMob
-  http: ^1.6.0
-  desktop_window: ^0.4.2
-  shared_preferences: ^2.5.5
+  google_generative_ai: ^0.4.0 # ตัวเชื่อมต่อ AI Gemini
+  google_mobile_ads: ^5.1.0    # ตัวจัดการโฆษณา AdMob
+  http: ^1.2.2
+  desktop_window: ^0.4.0
+  shared_preferences: ^2.2.3
+  encrypt: ^5.0.3
+  intl: ^0.19.0
+  gsheets: ^0.5.0
 
 dev_dependencies:
   flutter_test:

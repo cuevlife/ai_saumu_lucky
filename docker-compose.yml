@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  flutter:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      - ADB_SERVER_SOCKET=tcp:host.docker.internal:5037
+    ports:
+      - "8888:8888"
+    # เปิดเพื่อให้ Container คุยกับ Host ได้ (สำหรับ ADB)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    tty: true
+    stdin_open: true

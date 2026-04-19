@@ -1,0 +1,20 @@
+{
+    "name": "Flutter Dev Container",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "flutter",
+    "workspaceFolder": "/app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dart-code.flutter",
+                "dart-code.dart-code",
+                "formulahendry.terminal"
+            ],
+            "settings": {
+                "dart.flutterSdkPath": "/home/cirrus/sdks/flutter"
+            }
+        }
+    },
+    "remoteUser": "root",
+    "postCreateCommand": "flutter pub get"
+}

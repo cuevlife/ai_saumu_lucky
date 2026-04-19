@@ -21,6 +21,8 @@ class _HoroscopeScreenState extends State<HoroscopeScreen> {
   Map<String, dynamic>? _result;
   String? _selectedZodiac;
 
+  late final GeminiService _geminiService;
+
   final List<String> _zodiacs = [
     'ราศีเมษ', 'ราศีพฤษภ', 'ราศีเมถุน', 'ราศีกรกฎ',
     'ราศีสิงห์', 'ราศีกันย์', 'ราศีตุลย์', 'ราศีพิจิก',
@@ -28,27 +30,24 @@ class _HoroscopeScreenState extends State<HoroscopeScreen> {
   ];
 
   final Map<String, IconData> _zodiacIcons = {
-    'ราศีเมษ': Icons.filter_drama, // แกะ
-    'ราศีพฤษภ': Icons.agriculture, // วัว
-    'ราศีเมถุน': Icons.people_outline, // คู่
-    'ราศีกรกฎ': Icons.waves, // ปู
-    'ราศีสิงห์': Icons.pets, // สิงโต
-    'ราศีกันย์': Icons.face_retouching_natural, // นางฟ้า
-    'ราศีตุลย์': Icons.balance, // คันชั่ง
-    'ราศีพิจิก': Icons.bug_report, // แมงป่อง
-    'ราศีธนู': Icons.near_me, // ธนู
-    'ราศีมังกร': Icons.terrain, // มังกร
-    'ราศีกุมภ์': Icons.opacity, // คนโทน้ำ
-    'ราศีมีน': Icons.sailing, // ปลา
+    'ราศีเมษ': Icons.filter_drama,
+    'ราศีพฤษภ': Icons.agriculture,
+    'ราศีเมถุน': Icons.people_outline,
+    'ราศีกรกฎ': Icons.waves,
+    'ราศีสิงห์': Icons.pets,
+    'ราศีกันย์': Icons.face_retouching_natural,
+    'ราศีตุลย์': Icons.balance,
+    'ราศีพิจิก': Icons.bug_report,
+    'ราศีธนู': Icons.near_me,
+    'ราศีมังกร': Icons.terrain,
+    'ราศีกุมภ์': Icons.opacity,
+    'ราศีมีน': Icons.sailing,
   };
-
-  final String _scriptUrl = 'https://script.google.com/macros/s/AKfycbzNNrCsyhU0xRDTlddy0peMhcLg0DKvcZYORZfB1v6s6jH-poHSn2YdgKW7livWINHnow/exec';
-  late final GeminiService _geminiService;
 
   @override
   void initState() {
     super.initState();
-    _geminiService = GeminiService(scriptUrl: _scriptUrl);
+    _geminiService = GeminiService();
   }
 
   Future<void> _fetchHoroscope(String zodiac) async {
@@ -75,14 +74,14 @@ class _HoroscopeScreenState extends State<HoroscopeScreen> {
       final response = await _geminiService.callAbdul(horoscopePrompt); 
       final decodedResponse = json.decode(response);
 
+      if (!mounted) return; // ป้องกัน Error ถ้าผู้ใช้ปิดหน้าไปก่อน
+
       setState(() {
         _result = decodedResponse;
         _isLoading = false;
       });
-
-      // ดึงจาก Sheet (6.0) จะไม่เสีย Token แต่ถ้าเป็นคนแรกของวันจะเสีย 1 Token
-      // ตรงนี้เราให้ดูฟรีเพื่อดึงดูดคน (ตามแผน Zero-Token)
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _result = {'error': 'กระแสจักรวาลติดขัด: $e'};
@@ -171,15 +170,12 @@ class _HoroscopeScreenState extends State<HoroscopeScreen> {
   Widget _buildZodiacPlate(String zodiac) {
     return InkWell(
       onTap: () => _fetchHoroscope(zodiac),
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF1A1A1A),
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.4), width: 1.5),
-          boxShadow: [
-            BoxShadow(color: const Color(0xFFD4AF37).withOpacity(0.05), blurRadius: 10)
-          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -236,7 +232,7 @@ class _HoroscopeScreenState extends State<HoroscopeScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: accentColor.withOpacity(0.3)),
       ),
       child: Row(
@@ -268,7 +264,7 @@ class _HoroscopeScreenState extends State<HoroscopeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
           decoration: BoxDecoration(
             color: const Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.5)),
           ),
           child: Text(

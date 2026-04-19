@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:desktop_window/desktop_window.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'services/security_service.dart';
 import 'screens/dream_predictor_screen.dart';
 import 'screens/horoscope_screen.dart';
 import 'screens/zodiac_calculator_screen.dart';
 import 'screens/lucky_history_screen.dart';
 import 'screens/tarot_screen.dart';
+import 'screens/dev_tools_screen.dart'; // เพิ่มหน้า Dev Tools
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  if (Platform.isAndroid || Platform.isIOS) {
+  // ป้องกัน Error บน Web: เช็ค kIsWeb ก่อนใช้ Platform
+  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
     try {
       MobileAds.instance.initialize();
     } catch (e) {
@@ -19,7 +23,7 @@ void main() async {
     }
   }
   
-  if (Platform.isWindows) {
+  if (!kIsWeb && Platform.isWindows) {
     try {
       await DesktopWindow.setWindowSize(const Size(400, 750));
       await DesktopWindow.setMinWindowSize(const Size(400, 750));
@@ -56,6 +60,16 @@ class SaumuLuckyApp extends StatelessWidget {
         ),
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFF0F0F0F),
+        // Global style for Material 3 components
+        cardTheme: CardTheme(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 1,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
       ),
       home: const HomePage(),
     );
@@ -78,12 +92,20 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadBannerAd();
-    _loadRewardedAd();
+    
+    // --- ปุ่มลับสำหรับเจ้าของแอป: ใส่ Key จริงตรงนี้เพื่อเอารหัสไปแปะใน Sheet ---
+    // String myRealKey = "AIzaSyDJMwUYRKE3POJ8"; 
+    // debugPrint("ENCRYPTED KEY FOR SHEET: ${SecurityService.encryptKey(myRealKey)}");
+    // ------------------------------------------------------------------
+
+    if (!kIsWeb) {
+      _loadBannerAd();
+      _loadRewardedAd();
+    }
   }
 
   void _loadBannerAd() {
-    if (!Platform.isAndroid && !Platform.isIOS) return;
+    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
     _bannerAd = BannerAd(
       adUnitId: AdHelper.bannerAdUnitId,
       request: const AdRequest(),
@@ -99,7 +121,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _loadRewardedAd() {
-    if (!Platform.isAndroid && !Platform.isIOS) return;
+    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
     RewardedAd.load(
       adUnitId: AdHelper.rewardedAdUnitId,
       request: const AdRequest(),
@@ -113,7 +135,7 @@ class _HomePageState extends State<HomePage> {
   void _showRewardedAd() {
     if (_rewardedAd == null) {
       setState(() => userCoins += 1);
-      _loadRewardedAd();
+      if (!kIsWeb) _loadRewardedAd();
       return;
     }
     _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
@@ -142,14 +164,14 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic> _getDailyLuckyColor() {
     final int weekday = DateTime.now().weekday;
     switch (weekday) {
-      case 1: return {'day': 'วันจันทร์', 'color': 'เหลือง / ส้ม', 'bg': const Color(0xFF333300), 'text': Colors.yellow[600]!};
-      case 2: return {'day': 'วันอังคาร', 'color': 'ชมพู / แดง', 'bg': const Color(0xFF330011), 'text': Colors.pink[400]!};
-      case 3: return {'day': 'วันพุธ', 'color': 'เขียว / เทา', 'bg': const Color(0xFF003311), 'text': Colors.green[400]!};
-      case 4: return {'day': 'วันพฤหัสบดี', 'color': 'ส้ม / ทอง', 'bg': const Color(0xFF331A00), 'text': Colors.orange[400]!};
-      case 5: return {'day': 'วันศุกร์', 'color': 'ฟ้า / น้ำเงิน', 'bg': const Color(0xFF001A33), 'text': Colors.blue[400]!};
-      case 6: return {'day': 'วันเสาร์', 'color': 'ม่วง / ดำ', 'bg': const Color(0xFF1A0033), 'text': Colors.purple[400]!};
-      case 7: return {'day': 'วันอาทิตย์', 'color': 'แดง / ชมพู', 'bg': const Color(0xFF330000), 'text': Colors.red[400]!};
-      default: return {'day': 'วันนี้', 'color': 'ทองมงคล', 'bg': const Color(0xFF1A1A1A), 'text': const Color(0xFFD4AF37)};
+      case 1: return {'day': 'วันจันทร์', 'color': 'เหลือง / ส้ม', 'bg': const Color(0xFF1A1A00), 'text': Colors.yellow[600]!};
+      case 2: return {'day': 'วันอังคาร', 'color': 'ชมพู / แดง', 'bg': const Color(0xFF1A0008), 'text': Colors.pink[400]!};
+      case 3: return {'day': 'วันพุธ', 'color': 'เขียว / เทา', 'bg': const Color(0xFF001A08), 'text': Colors.green[400]!};
+      case 4: return {'day': 'วันพฤหัสบดี', 'color': 'ส้ม / ทอง', 'bg': const Color(0xFF1A0D00), 'text': Colors.orange[400]!};
+      case 5: return {'day': 'วันศุกร์', 'color': 'ฟ้า / น้ำเงิน', 'bg': const Color(0xFF000D1A), 'text': Colors.blue[400]!};
+      case 6: return {'day': 'วันเสาร์', 'color': 'ม่วง / ดำ', 'bg': const Color(0xFF0D001A), 'text': Colors.purple[400]!};
+      case 7: return {'day': 'วันอาทิตย์', 'color': 'แดง / ชมพู', 'bg': const Color(0xFF1A0000), 'text': Colors.red[400]!};
+      default: return {'day': 'วันนี้', 'color': 'ทองมงคล', 'bg': const Color(0xFF0A0A0A), 'text': const Color(0xFFD4AF37)};
     }
   }
 
@@ -160,25 +182,11 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: Stack(
         children: [
-          // พื้นหลังรูปดวงดาวอลังการ
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.4, // จางๆ เพื่อไม่ให้กวนเนื้อหา
-              child: Image.asset(
-                'assets/stars_bg.jpg',
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          // พื้นหลังสีเข้มทับรูปอีกชั้น
+          // Simplified Background
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0xFF0F0F0F)],
-                ),
+                color: Color(0xFF0F0F0F),
               ),
             ),
           ),
@@ -186,25 +194,30 @@ class _HomePageState extends State<HomePage> {
           Column(
             children: [
               AppBar(
-                title: const Text('มูนำโชค', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold, letterSpacing: 3)),
+                title: const Text('มูนำโชค', style: TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold, letterSpacing: 3, fontSize: 18)),
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 centerTitle: true,
                 actions: [
-                  Container(
-                    margin: const EdgeInsets.only(right: 15),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD4AF37).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFD4AF37), width: 1),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.stars, color: Color(0xFFD4AF37), size: 18),
-                        const SizedBox(width: 6),
-                        Text('$userCoins', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD4AF37))),
-                      ],
+                  GestureDetector(
+                    onLongPress: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const DevToolsScreen()));
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 15),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD4AF37).withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.3), width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.stars, color: Color(0xFFD4AF37), size: 16),
+                          const SizedBox(width: 4),
+                          Text('$userCoins', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD4AF37), fontSize: 13)),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -233,19 +246,14 @@ class _HomePageState extends State<HomePage> {
   Widget _buildHeroBanner() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
       child: Column(
         children: [
-          const Stack(
-            alignment: Alignment.center,
-            children: [
-              Icon(Icons.circle, size: 100, color: Colors.white10),
-              Icon(Icons.auto_awesome, size: 50, color: Color(0xFFD4AF37)),
-            ],
-          ),
-          const SizedBox(height: 15),
-          const Text('ประตูสู่โชคชะตา', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.5)),
-          Text('ให้จิตสัมผัสและ AI นำทางคุณ', style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.5))),
+          const Icon(Icons.auto_awesome, size: 40, color: Color(0xFFD4AF37)),
+          const SizedBox(height: 12),
+          const Text('ประตูสู่โชคชะตา', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.2)),
+          const SizedBox(height: 4),
+          Text('ให้จิตสัมผัสและ AI นำทางคุณ', style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.4))),
         ],
       ),
     );
@@ -254,17 +262,17 @@ class _HomePageState extends State<HomePage> {
   Widget _buildLuckyColorCard(Map<String, dynamic> lucky) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
       decoration: BoxDecoration(
-        color: lucky['bg'].withOpacity(0.5),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: lucky['text'].withOpacity(0.3)),
+        color: lucky['bg'].withOpacity(0.8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: lucky['text'].withOpacity(0.2), width: 0.5),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('สีมงคล${lucky['day']}: ', style: const TextStyle(fontSize: 14, color: Colors.white70)),
-          Text(lucky['color'], style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: lucky['text'])),
+          Text('สีมงคล${lucky['day']}: ', style: const TextStyle(fontSize: 13, color: Colors.white70)),
+          Text(lucky['color'], style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: lucky['text'])),
         ],
       ),
     );
@@ -272,7 +280,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildMenuGrid() {
     return Padding(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Column(
         children: [
           _buildPremiumMenuCard(
@@ -286,7 +294,7 @@ class _HomePageState extends State<HomePage> {
             title: 'ไพ่ยิปซีรายวัน',
             subtitle: 'เปิดประตูดวงชะตา (2 🪙)',
             icon: Icons.style,
-            color: Colors.purple[400]!,
+            color: const Color(0xFF9C27B0),
             onTap: () => _navigateTo(context, 'tarot'),
           ),
           Row(
@@ -320,32 +328,32 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildPremiumMenuCard({required String title, required String subtitle, required IconData icon, required Color color, required VoidCallback onTap}) {
     return Container(
-      margin: const EdgeInsets.all(10),
+      margin: const EdgeInsets.all(8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withOpacity(0.5), width: 1.5),
-            boxShadow: [BoxShadow(color: color.withOpacity(0.1), blurRadius: 10)],
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withOpacity(0.2), width: 1),
           ),
           child: Row(
             children: [
-              Icon(icon, size: 35, color: color),
-              const SizedBox(width: 20),
+              Icon(icon, size: 28, color: color),
+              const SizedBox(width: 15),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                    Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5))),
+                    Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.4))),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white24),
+              Icon(Icons.chevron_right, size: 18, color: Colors.white.withOpacity(0.2)),
             ],
           ),
         ),
@@ -355,23 +363,23 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildSmallMenuCard({required String title, required IconData icon, bool isFullWidth = false, required VoidCallback onTap}) {
     return Container(
-      margin: const EdgeInsets.all(10),
+      margin: const EdgeInsets.all(8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: Colors.white10),
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20, color: const Color(0xFFD4AF37)),
-              const SizedBox(width: 10),
-              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white70)),
+              Icon(icon, size: 18, color: const Color(0xFFD4AF37).withOpacity(0.7)),
+              const SizedBox(width: 8),
+              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white70)),
             ],
           ),
         ),
@@ -383,7 +391,7 @@ class _HomePageState extends State<HomePage> {
     if (_isBannerAdReady) {
       return SizedBox(width: _bannerAd!.size.width.toDouble(), height: _bannerAd!.size.height.toDouble(), child: AdWidget(ad: _bannerAd!));
     }
-    return Container(height: 50, color: Colors.black, child: const Center(child: Text('ADVERTISING', style: TextStyle(color: Colors.white10, fontSize: 10))));
+    return Container(height: 50, color: const Color(0xFF0A0A0A), child: const Center(child: Text('ADVERTISING', style: TextStyle(color: Colors.white10, fontSize: 10, letterSpacing: 2))));
   }
 
   void _navigateTo(BuildContext context, String type) {

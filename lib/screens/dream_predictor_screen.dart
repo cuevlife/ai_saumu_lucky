@@ -25,13 +25,12 @@ class _DreamPredictorScreenState extends State<DreamPredictorScreen> {
   bool _isSaved = false;
   bool _isAiAnalysis = false;
 
-  final String _scriptUrl = 'https://script.google.com/macros/s/AKfycbzNNrCsyhU0xRDTlddy0peMhcLg0DKvcZYORZfB1v6s6jH-poHSn2YdgKW7livWINHnow/exec';
   late final GeminiService _geminiService;
 
   @override
   void initState() {
     super.initState();
-    _geminiService = GeminiService(scriptUrl: _scriptUrl);
+    _geminiService = GeminiService();
   }
 
   void _searchLocalDictionary() {
@@ -82,6 +81,8 @@ class _DreamPredictorScreenState extends State<DreamPredictorScreen> {
       final response = await _geminiService.callAbdul(dreamPrompt);
       final decodedResponse = json.decode(response);
 
+      if (!mounted) return;
+
       setState(() {
         _result = decodedResponse;
         _isLoading = false;
@@ -90,6 +91,7 @@ class _DreamPredictorScreenState extends State<DreamPredictorScreen> {
 
       widget.onCoinDeducted(widget.currentCoins - 5);
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _result = {'error': 'กระแสจิตขัดข้อง: $e'};
@@ -126,59 +128,50 @@ class _DreamPredictorScreenState extends State<DreamPredictorScreen> {
       ),
       body: Container(
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF0F0F0F), Color(0xFF2A0A0A)],
-          ),
-        ),
+        color: const Color(0xFF0F0F0F),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(25.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.nightlight_round, size: 60, color: Color(0xFFD4AF37)),
-              const SizedBox(height: 20),
+              const Icon(Icons.nightlight_round, size: 40, color: Color(0xFFD4AF37)),
+              const SizedBox(height: 15),
               const Text(
                 'ความฝันคือสารจากเบื้องบน...',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 16, fontStyle: FontStyle.italic),
+                style: TextStyle(color: Colors.white38, fontSize: 13, fontStyle: FontStyle.italic),
               ),
-              const SizedBox(height: 30),
-              
-              // ช่องพิมพ์ฝันแบบ Mystical
+              const SizedBox(height: 25),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.3)),
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.1)),
                 ),
                 child: TextField(
                   controller: _dreamController,
                   maxLines: 4,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
                   decoration: const InputDecoration(
                     hintText: 'เล่าความฝันของท่านให้เราฟัง...',
-                    hintStyle: TextStyle(color: Colors.white24),
+                    hintStyle: TextStyle(color: Colors.white12),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(20),
+                    contentPadding: EdgeInsets.all(15),
                   ),
                 ),
               ),
-              const SizedBox(height: 30),
-              
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
                     child: _buildActionButton(
                       label: 'ค้นตำรา (ฟรี)',
-                      color: Colors.white10,
+                      color: Colors.white.withOpacity(0.03),
                       textColor: const Color(0xFFD4AF37),
                       onTap: _isLoading ? null : _searchLocalDictionary,
                     ),
                   ),
-                  const SizedBox(width: 15),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _buildActionButton(
                       label: 'AI เจาะลึก (5 🪙)',
@@ -189,12 +182,10 @@ class _DreamPredictorScreenState extends State<DreamPredictorScreen> {
                   ),
                 ],
               ),
-              
               if (_isLoading) 
-                const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator(color: Color(0xFFD4AF37)))),
-              
+                const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator(color: Color(0xFFD4AF37), strokeWidth: 2))),
               if (_result != null) ...[
-                const SizedBox(height: 40),
+                const SizedBox(height: 30),
                 _buildSacredResultCard(),
               ],
             ],
@@ -207,18 +198,18 @@ class _DreamPredictorScreenState extends State<DreamPredictorScreen> {
   Widget _buildActionButton({required String label, required Color color, required Color textColor, VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 15),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.5)),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.2)),
         ),
         child: Text(
           label,
           textAlign: TextAlign.center,
-          style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 14),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 13),
         ),
       ),
     );
@@ -228,52 +219,54 @@ class _DreamPredictorScreenState extends State<DreamPredictorScreen> {
     if (_result!.containsKey('error')) return Text('Error: ${_result!['error']}', style: const TextStyle(color: Colors.red));
     
     return Container(
-      padding: const EdgeInsets.all(25),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
-        boxShadow: [
-          BoxShadow(color: _isAiAnalysis ? const Color(0xFFD4AF37).withOpacity(0.2) : Colors.black, blurRadius: 30)
-        ],
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFD4AF37).withOpacity(0.3), width: 1),
       ),
       child: Column(
         children: [
-          Icon(_isAiAnalysis ? Icons.auto_awesome : Icons.menu_book, color: const Color(0xFFD4AF37), size: 30),
-          const SizedBox(height: 15),
+          Icon(_isAiAnalysis ? Icons.auto_awesome : Icons.menu_book, color: const Color(0xFFD4AF37).withOpacity(0.7), size: 24),
+          const SizedBox(height: 12),
           Text(
             _isAiAnalysis ? 'สารจากอับดุล' : 'จากตำราโบราณ',
-            style: const TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold, letterSpacing: 1),
+            style: const TextStyle(color: Color(0xFFD4AF37), fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 12),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 15),
           Text(
             _result!['prediction'] ?? '',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.6),
+            style: const TextStyle(color: Colors.white70, fontSize: 15, height: 1.5),
           ),
-          const Divider(height: 40, color: Colors.white10),
+          const Divider(height: 30, color: Colors.white10),
           Text(
             'เลขมงคลแฝง',
-            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, letterSpacing: 2),
+            style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 11, letterSpacing: 2),
           ),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildNumberGlow(_result!['lucky_numbers_2'].join(' , ')),
-              const SizedBox(width: 20),
+              const SizedBox(width: 25),
               _buildNumberGlow(_result!['lucky_numbers_3'].join(' , ')),
             ],
           ),
-          const SizedBox(height: 30),
-          ElevatedButton.icon(
-            onPressed: _isSaved ? null : _saveToHistory,
-            icon: Icon(_isSaved ? Icons.check : Icons.bookmark_added_outlined),
-            label: Text(_isSaved ? 'จารึกแล้ว' : 'จารึกลงคลังเลข'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B0000),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          const SizedBox(height: 25),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isSaved ? null : _saveToHistory,
+              icon: Icon(_isSaved ? Icons.check : Icons.bookmark_added_outlined, size: 18),
+              label: Text(_isSaved ? 'จารึกแล้ว' : 'จารึกลงคลังเลข', style: const TextStyle(fontSize: 13)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8B0000),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
             ),
           ),
         ],
@@ -286,9 +279,8 @@ class _DreamPredictorScreenState extends State<DreamPredictorScreen> {
       numbers,
       style: const TextStyle(
         color: Color(0xFFFFD700),
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: FontWeight.bold,
-        shadows: [Shadow(color: Color(0xFFD4AF37), blurRadius: 15)],
       ),
     );
   }
